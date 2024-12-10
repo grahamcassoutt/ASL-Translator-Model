@@ -1,4 +1,4 @@
-# Linear Regression Trainer
+# Logistic Regression Trainer
 
 - M1 - Create code to create a model based on data collected
 - M2 - Data was not yet all collected
