@@ -1,32 +1,35 @@
 # asl-model.py
 
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-import numpy as np
 import pandas as pd
-import joblib
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+import coremltools as ct
 
-df = pd.read_excel('asl-alphabet.xlsx', sheet_name='Sheet1')
+
+df = pd.read_excel('positions2.xlsx', sheet_name='Sheet1')
 
 # Get data for inputs and outputs
-x = np.array(df[df.columns[0:16]])
-y = np.array(df[df.columns[16]])
-
+x = df.iloc[:, 0:40].values
+y = df.iloc[:, 40].values
 
 # Splits into train and test sets
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1)
 
-# Train the linear regression model and predict
-lr = LinearRegression()
+
+lr = LogisticRegression(multi_class='ovr', max_iter=200)
 lr.fit(x_train, y_train)
-y_predictions = lr.predict(x_test)
+y_pred = lr.predict(x_test)
 
-joblib.dump(lr, 'asl_linear_regression_model.joblib')
+accuracy = accuracy_score(y_test, y_pred)
 
-# Printing
-y_predictions = np.round(y_predictions, 2)
-for i in range(0, len(y_predictions), 1):
-    print(i, ' \t', y_test[i], '\t', y_predictions[i])
+# Printing and Saving
+print("Accuracy:", accuracy)
+coremlModel = ct.converters.sklearn.convert(
+    lr,
+    input_features=[f"feature_{i}" for i in range(1, 41)],
+    output_feature_names="label"
+)
+coremlModel.save("PositionsLogisticRegression4.mlmodel")
 
 
-print('\nR-squared: %.4f' %lr.score(x_test, y_test))
